@@ -175,6 +175,12 @@ export function RaceBettingProvider({ children }) {
                 u.username === userData.username ? userData : u
             )
         );
+        // Also update in main users list
+        const users = JSON.parse(localStorage.getItem('users') || "[]");
+        const updatedUsers = users.map(u =>
+            u.username === userData.username ? userData : u
+        );
+        localStorage.setItem('users', JSON.stringify(updatedUsers));
     };
 
     const addRaceResult = (result) => {
