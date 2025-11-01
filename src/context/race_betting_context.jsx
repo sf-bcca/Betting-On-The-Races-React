@@ -36,24 +36,15 @@ export function RaceBettingProvider({ children }) {
     // Save user data to localStorage whenever it changes
     useEffect(() => {
         if (user) {
-            localStorage.setItem('currentUser', JSON.stringify(user));
+            // Include current wallet amount in saved user
+            const userWithWallet = { ...user, wallet };
+            localStorage.setItem('currentUser', JSON.stringify(userWithWallet));
         }
-    }, [user]);
+    }, [user, wallet]);
 
     // Save wallet to localStorage whenever it changes
-    // Save wallet to localStorage whenever it changes
-    // Note: Not including 'user' in dependencies as it would cause unnecessary updates
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         localStorage.setItem('userWallet', wallet.toString());
-        
-        // Also update the wallet in the user object
-        if (user) {
-            setUser(prev => ({
-                ...prev,
-                wallet: wallet,
-            }));
-        }
     }, [wallet]);
 
     // Save registered users to localStorage whenever they change
@@ -97,12 +88,11 @@ export function RaceBettingProvider({ children }) {
                     const user = JSON.parse(savedUser);
                     setUser(user);
                     
-                    const savedWallet = localStorage.getItem('userWallet');
-                    if (savedWallet) {
-                        setWallet(parseFloat(savedWallet));
-                    } else {
-                        setWallet(user.wallet || 0);
-                    }
+                    // Use wallet from saved user object
+                    const userWallet = user.wallet || 0;
+                    setWallet(userWallet);
+                    localStorage.setItem('userWallet', userWallet.toString());
+                    console.log(`✅ Session restored: ${user.name}, Wallet: $${userWallet}`);
                 }
                 
                 // Load registered users
@@ -204,11 +194,10 @@ export function RaceBettingProvider({ children }) {
         });
     };
 
-    // Sync wallet changes to registered users BEFORE logout
-    // Note: Not including 'user' in dependencies as it would cause unnecessary updates
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Sync wallet changes to registered users AND main users list
     useEffect(() => {
         if (user && wallet >= 0) {
+            // Update registered users
             setRegisteredUsers(prevUsers =>
                 prevUsers.map(u =>
                     u.username === user.username
@@ -216,8 +205,17 @@ export function RaceBettingProvider({ children }) {
                         : u
                 )
             );
+            
+            // Also update main users list in localStorage
+            const users = JSON.parse(localStorage.getItem('users') || "[]");
+            const updatedUsers = users.map(u =>
+                u.username === user.username
+                    ? { ...u, wallet: wallet }
+                    : u
+            );
+            localStorage.setItem('users', JSON.stringify(updatedUsers));
         }
-    }, [wallet]);
+    }, [wallet, user]);
 
     // Update user stats when race history changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
