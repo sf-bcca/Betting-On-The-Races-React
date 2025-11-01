@@ -69,6 +69,27 @@ export function RaceBettingProvider({ children }) {
 
         const restoreSession = async () => {
             try {
+                // Initialize admin user if no users exist
+                let users = JSON.parse(localStorage.getItem('users') || "[]");
+                
+                if (users.length === 0) {
+                    // Create default admin user
+                    const adminUser = {
+                        id: "admin_001",
+                        name: "Admin",
+                        username: "admin123",
+                        password: "password",
+                        wallet: 10000,
+                        email: "admin@example.com",
+                        phone: "(123) 456-7890",
+                        isAdmin: true,
+                        createdAt: new Date().toISOString()
+                    };
+                    users.push(adminUser);
+                    localStorage.setItem('users', JSON.stringify(users));
+                    console.log('✅ Admin user initialized');
+                }
+                
                 // Check if there's a saved user session
                 const savedUser = localStorage.getItem('currentUser');
                 if (savedUser) {
@@ -89,8 +110,8 @@ export function RaceBettingProvider({ children }) {
                     setRegisteredUsers(JSON.parse(savedUsers));
                 } else {
                     // Initialize with users from storage
-                    const users = JSON.parse(localStorage.getItem('users') || "[]");
                     setRegisteredUsers(users);
+                    localStorage.setItem('registeredUsers', JSON.stringify(users));
                 }
             } catch (error) {
                 console.error('Error restoring session:', error);
