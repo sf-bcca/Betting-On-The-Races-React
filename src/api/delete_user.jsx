@@ -1,20 +1,26 @@
 const deleteUser = async (username) => {
   try {
-    const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5001";
-    const response = await fetch(
-      `${apiUrl}/api/users/username/${username}`,
-      {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to delete user');
+    // Get all users from localStorage
+    const users = JSON.parse(localStorage.getItem("users") || "[]");
+    
+    // Find and remove the user
+    const userIndex = users.findIndex(u => u.username === username);
+    if (userIndex === -1) {
+      throw new Error("User not found");
     }
 
-    return await response.json();
+    const deletedUser = users[userIndex];
+    users.splice(userIndex, 1);
+    localStorage.setItem("users", JSON.stringify(users));
+
+    // Clear currentUser if it's the deleted user
+    const currentUser = JSON.parse(localStorage.getItem("currentUser") || "null");
+    if (currentUser && currentUser.username === username) {
+      localStorage.removeItem("currentUser");
+      localStorage.removeItem("userWallet");
+    }
+
+    return deletedUser;
   } catch (error) {
     console.error('Delete user error:', error);
     throw error;

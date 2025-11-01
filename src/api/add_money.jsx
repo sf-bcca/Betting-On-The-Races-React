@@ -1,21 +1,26 @@
 const addMoney = async (username, amount) => {
   try {
-    const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5001";
-    const response = await fetch(
-      `${apiUrl}/api/add-money/${username}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount }),
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to add money');
+    // Get all users from localStorage
+    const users = JSON.parse(localStorage.getItem("users") || "[]");
+    
+    // Find and update the user's wallet
+    const userIndex = users.findIndex(u => u.username === username);
+    if (userIndex === -1) {
+      throw new Error("User not found");
     }
 
-    return await response.json();
+    users[userIndex].wallet += amount;
+    localStorage.setItem("users", JSON.stringify(users));
+
+    // Also update currentUser if it's the logged-in user
+    const currentUser = JSON.parse(localStorage.getItem("currentUser") || "null");
+    if (currentUser && currentUser.username === username) {
+      currentUser.wallet += amount;
+      localStorage.setItem("currentUser", JSON.stringify(currentUser));
+      localStorage.setItem("userWallet", currentUser.wallet.toString());
+    }
+
+    return users[userIndex];
   } catch (error) {
     console.error('Add money error:', error);
     throw error;

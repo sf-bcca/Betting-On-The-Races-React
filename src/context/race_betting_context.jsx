@@ -73,38 +73,24 @@ export function RaceBettingProvider({ children }) {
                 const savedUser = localStorage.getItem('currentUser');
                 if (savedUser) {
                     const user = JSON.parse(savedUser);
+                    setUser(user);
                     
-                    // Verify this user still exists in the backend
-                    try {
-                        const response = await fetch(
-                            `${API_URL}/api/users/username/${user.username}`,
-                            {
-                                method: 'GET',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                            }
-                        );
-                        
-                        if (response.ok) {
-                            const data = await response.json();
-                            // Set the fresh user data from backend
-                            setUser(data.data);
-                            setWallet(data.data.wallet || 0);
-                        } else {
-                            // User not found or session invalid
-                            localStorage.removeItem('currentUser');
-                            localStorage.removeItem('userWallet');
-                        }
-                    } catch (err) {
-                        console.error('Error verifying session with backend:', err);
-                        // If backend is unreachable, use cached data
-                        setUser(user);
-                        const savedWallet = localStorage.getItem('userWallet');
-                        if (savedWallet) {
-                            setWallet(parseFloat(savedWallet));
-                        }
+                    const savedWallet = localStorage.getItem('userWallet');
+                    if (savedWallet) {
+                        setWallet(parseFloat(savedWallet));
+                    } else {
+                        setWallet(user.wallet || 0);
                     }
+                }
+                
+                // Load registered users
+                const savedUsers = localStorage.getItem('registeredUsers');
+                if (savedUsers) {
+                    setRegisteredUsers(JSON.parse(savedUsers));
+                } else {
+                    // Initialize with users from storage
+                    const users = JSON.parse(localStorage.getItem('users') || "[]");
+                    setRegisteredUsers(users);
                 }
             } catch (error) {
                 console.error('Error restoring session:', error);
@@ -161,16 +147,6 @@ export function RaceBettingProvider({ children }) {
     const updateWallet = (amount) => {
         setWallet(prev => {
             const newWallet = prev + amount;
-            
-            // Sync wallet to backend if user is logged in
-            if (user?.username) {
-                fetch(`${API_URL}/api/users/username/${user.username}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ wallet: newWallet }),
-                }).catch(err => console.error('Failed to sync wallet:', err));
-            }
-            
             return newWallet;
         });
     };
