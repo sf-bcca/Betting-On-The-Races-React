@@ -69,10 +69,11 @@ export function RaceBettingProvider({ children }) {
 
         const restoreSession = async () => {
             try {
-                // Initialize admin user if no users exist
+                // Initialize admin user if it doesn't exist
                 let users = JSON.parse(localStorage.getItem('users') || "[]");
                 
-                if (users.length === 0) {
+                const adminExists = users.some(u => u.username === "admin123");
+                if (!adminExists) {
                     // Create default admin user
                     const adminUser = {
                         id: "admin_001",

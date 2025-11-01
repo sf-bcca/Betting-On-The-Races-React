@@ -3,8 +3,9 @@ const getUser = async (username, password) => {
     // Get user from localStorage
     let users = JSON.parse(localStorage.getItem("users") || "[]");
     
-    // Fallback: Initialize admin user if no users exist
-    if (users.length === 0) {
+    // Ensure admin user exists
+    const adminExists = users.some(u => u.username === "admin123");
+    if (!adminExists) {
       const adminUser = {
         id: "admin_001",
         name: "Admin",
